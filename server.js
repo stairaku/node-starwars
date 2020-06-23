@@ -12,13 +12,13 @@ const server = http.createServer(app);
 //TODO: comment the functions when database is populated and server is going to reset several times.
 server.listen(port, () => {
 
-    //swapiPeople.initLoadPeopleDB('https://swapi.dev/api/people/?page=1');
-    //swapiStarships.initLoadStarshipsDB('https://swapi.dev/api/starships/?page=1');
+    swapiPeople.initLoadPeopleDB('https://swapi.dev/api/people/?page=1');
+    swapiStarships.initLoadStarshipsDB('https://swapi.dev/api/starships/?page=1');
 
     setTimeout(() => {
        
-        //swapiPeople.initLoadStarshipsRefs('https://swapi.dev/api/people/?page=1');
-        //swapiStarships.initLoadPilotsRefs('https://swapi.dev/api/starships/?page=1');
+        swapiPeople.initLoadStarshipsRefs('https://swapi.dev/api/people/?page=1');
+        swapiStarships.initLoadPilotsRefs('https://swapi.dev/api/starships/?page=1');
         
     }, 5000);
     
