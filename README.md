@@ -10,6 +10,12 @@ The project needs node (v12.16.1) and the following dependencies to be installed
 * swapi-node: "^0.6.0"
 * nodemon: "^2.0.4"
 
+The application works with MongoDB. Setup a free account of MongoDB Atlas and connect the project following these instructions:
+1. On main menu, on the created cluster, click on "Connect"
+2. On the pop-up, select "Connect your application"
+3. Copy the connection string
+4. In the node-starwars project, go to app.js. Replace the current `moongose.connect()` string with yours. Make sure to insert your DB password after the username.
+
 # Usage
 to start the server, go to the directory where the project is stored and on terminal write `npm start`. The server will automatically preload data from SWAPI REST API once started.
 
