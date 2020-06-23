@@ -1,44 +1,86 @@
+/**
+ * Swapi_starship controls all needed functions to pre-load Starships data from SWAPI REST API to MongoDB
+ */
+
 const swapi = require('swapi-node');
 const mongoose = require('mongoose');
 
 const Starship = require('../models/starship');
 const { json } = require('body-parser');
 
-module.exports.getTotalStarships = function () {
-    var total = swapi.get('https://swapi.dev/api/starships/?page=1').then((result) => {
-        return result.count;
-    });
-    return total;
-}
-module.exports.getStarship = function (objectID) {
-    swapi.get('https://swapi.dev/api/starships/'+ objectID)
-    .then((result) => {
-        console.log(result);
-        return result;
-    }).catch(error => {
-        return error;
-    });
-}
-module.exports.getStarshipByID = function (objectID) {
-    var starship = Starship.findById(objectID)
-    .exec()
-    .then(result => {
-        console.log(result);
-        return result;
-    })
-    .catch(err =>  {
-        console.log(err);
-        return err;
-    });
+const swapiPeople = require('./swapi_people');
 
-    return starship;
+
+/**
+ * Function used to pre-load starships data from SWAPI REST API to MongoDB
+ * @param {*} url 
+ */
+module.exports.initLoadStarshipsDB = function(url) {
+
+    var _this = this;
+    var next = url;
+    
+    var next = swapi.get(url).then((result) => {
+        var results = result.results;
+        console.log(results);
+        for(var i in results) {
+            (function(i) {
+                _this.postStarship(results[i]);
+            })(i);
+        }
+
+        if(result.next != null) {
+            var nextSubstring = result.next.substring(7);
+            next = 'https://' + nextSubstring;
+            _this.initLoadStarshipsDB(next);
+        } 
+        }).catch(error => {
+            console.log(error);
+        });
 }
 
+
+/**
+ * Function that pre-loads the relationship between starships and pilots (people). It updates each 
+ * person object by inserting the reference of pilots according to SWAPI REST API data
+ * @param {*} url 
+ */
+module.exports.initLoadPilotsRefs = function(url){
+
+    var _this = this;
+    var next = url;
+    
+    var next = swapi.get(url).then((result) => {
+        var results = result.results;
+        console.log(results);
+        for(var i in results) {
+            (function(i) {
+                _this.updatePilotsRefs(results[i]);
+            })(i);
+        }
+
+        if(result.next != null) {
+            var nextSubstring = result.next.substring(7);
+            next = 'https://' + nextSubstring;
+            _this.initLoadPilotsRefs(next);
+        } 
+        }).catch(error => {
+            console.log(error);
+        });
+
+}
+
+
+/**
+ * Function that looks for a starship in MongoDB by its URL attribute. Returns a starship object 
+ * from MongoDB that has the URL parameter
+ * @param {*} objectURL 
+ */
 module.exports.getStarshipByURL = function (objectURL) {
     var starship = Starship.find({url: objectURL})
     .exec()
     .then(result => {
-        console.log(result);
+        //console.log(result);
         return result;
     })
     .catch(err =>  {
@@ -49,10 +91,13 @@ module.exports.getStarshipByURL = function (objectURL) {
     return starship;
 }
 
+
+/**
+ * Function that creates a new starship in MongoDB. Returns the created object.
+ * @param {*} objectData 
+ */
 module.exports.postStarship = function(objectData) {
-    console.log("POST: " + objectData);
-    var pilots = objectData.pilots;
-    const Starship = new Starship({
+    var newStarship = new Starship({
         _id: new mongoose.Types.ObjectId(),
         name: objectData.name,
         model: objectData.model,
@@ -67,41 +112,49 @@ module.exports.postStarship = function(objectData) {
         hyperdrive_rating: objectData.hyperdrive_rating,
         MGLT: objectData.MGLT,
         starship_class: objectData.starship_class,
-        //pilots: [{type: mongoose.Schema.Types.ObjectId, ref: 'Person'}],
         created: objectData.created,
         edited: objectData.edited,
         url: objectData.url
     });
-    person.save().then(newObject => {
-        console.log(newObject);
-        console.log(pilots);
-        // for(var i = 0; i < starships.length; i++) {
-        //     swapiStarship.getStarshipByURL(starships[i])
-        //     .then(result => {
-        //         //console.log(result);
-        //         if(result.length === 0) {
-        //             console.log("NO EXISTE NAVE");
-                    
-        //         } else {
-        //             console.log("SI EXISTE NAVE");
-        //         }
-        //     }).catch(error => {
-        //         console.log(error);
-        //         return error;
-        //     });
+    var returnedNewObject = newStarship.save().then(newObject => {
 
-        //     //console.log(starship);
-        // }
-    }).catch(err => console.log(err));
+        return newObject;
+    }).catch(err => {
+        console.log(err);
+        return err.json({error: err});
+    });
+
+    return returnedNewObject;
 }
 
-module.exports.createStarShipsByRefs = function (objectURL) {
+
+/**
+ * Function that updates the pilots attribute from a given starship.
+ * @param {*} starshipData: starship object from SWAPI REST API
+ */
+module.exports.updatePilotsRefs = function (starshipData) {
+
+    var pilots = starshipData.pilots;
+    this.getStarshipByURL(starshipData.url)
+        .then(starshipResult => {
+            var starshipID = starshipResult[0]._id;
     
-    this.getStarship(objectURL)
-        .then(result => {
-            this.postStarship(result);
-            return result;
+            for(var i in pilots) {
+                (function(i) {
+                    swapiPeople.getPersonByURL(pilots[i])
+                    .then(foundPilot => {
+                            
+                        Starship.updateOne({_id: starshipID}, {$push: {pilots: [foundPilot[0]._id]}})
+                        .exec()
+                        .then(result => {
+                            console.log(result);
+                        }).catch(err => { console.log(err)});
+                    }).catch(err => {
+                            console.log(err);
+                    });
+                })(i);}
+    
         }).catch(error => {
-            return error;
-        })
+            console.log(error);  
+    });
 }

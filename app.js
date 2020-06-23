@@ -7,7 +7,9 @@ const mongoose = require('mongoose');
 const peopleRoutes = require('./api/routes/people');
 const starshipsRoutes = require('./api/routes/starships');
 
-mongoose.connect('mongodb+srv://stairaku:MongoDB123@cluster0-lkf93.mongodb.net/<dbname>?retryWrites=true&w=majority',{
+//Connection to MongoDB
+//TODO: change connection data when changing DB credentials
+mongoose.connect('mongodb+srv://stairaku:MongoDB123@cluster0-lkf93.mongodb.net/star-wars?retryWrites=true&w=majority',{
     useNewUrlParser: true,
     useUnifiedTopology: true
 });

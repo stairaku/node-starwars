@@ -1,9 +1,16 @@
+/**
+ * Routes for the people's model. They are routes to serve people's data
+ */
+
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-
 const Person = require('../models/person');
 
+
+/**
+ * route that gets all the people in the database
+ */
 router.get('/', (req, res) => {
     Person.find()
     .exec()
@@ -17,6 +24,9 @@ router.get('/', (req, res) => {
     
 });
 
+/**
+ * route that gets people in the database based on their ID
+ */
 router.get('/:peopleId', (req, res) => {
     const id = req.params.peopleId;
     Person.findById(id)
@@ -30,30 +40,31 @@ router.get('/:peopleId', (req, res) => {
     });
 });
 
-router.post('/', (req, res) => {
-    const person = new Person({
-        _id: new mongoose.Types.ObjectId(),
-        name: req.body.name,
-        height: req.body.height,
-        mass: req.body.mass,
-        hair_color: req.body.hair_color,
-        skin_color: req.body.skin_color,
-        eye_color: req.body.eye_color,
-        birth_date: req.body.birth_date,
-        gender: req.body.gender,
-        homeworld: req.body.homeworld,
-        starships: req.body.starships
-    });
-    person.save().then(result => {
-        console.log(result);
-    }).catch(err => console.log(err));
-    res.status(201).json({
-        message: 'Handling POST request to /people',
-        createdPerson: person
-    });
-});
 
-// TODO: Post new Objects
+// router.post('/', (req, res) => {
+//     const person = new Person({
+//         _id: new mongoose.Types.ObjectId(),
+//         name: req.body.name,
+//         height: req.body.height,
+//         mass: req.body.mass,
+//         hair_color: req.body.hair_color,
+//         skin_color: req.body.skin_color,
+//         eye_color: req.body.eye_color,
+//         birth_date: req.body.birth_date,
+//         gender: req.body.gender,
+//         homeworld: req.body.homeworld,
+//         starships: req.body.starships
+//     });
+//     person.save().then(result => {
+//         console.log(result);
+//     }).catch(err => console.log(err));
+//     res.status(201).json({
+//         message: 'Handling POST request to /people',
+//         createdPerson: person
+//     });
+// });
+
+// TODO: Post new People
 // TODO: Update object by ID
 // TODO: Delete object by ID
 
